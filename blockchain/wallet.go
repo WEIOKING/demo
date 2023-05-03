@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"demo/blockchain/erc20"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,25 +27,29 @@ var ethRpcUrl = "https://goerli.infura.io/v3/89aae6dea4504bc8a4485ad6219df6b3"
 var polygonRpcUrl = "https://rpc-mumbai.maticvigil.com/v1/99300cd360366c25a0222fc8b60323ba84f975a1"
 var password = "123456"
 var addressTo = "0x221CFd8877880EF2CA4847d8D114E77669243045"
+var BUSD_TOKEN_CONTRSCT = "0xa4e588a997f9eb8e72a06847576b2e1058187b9d"
 
 func main() {
 	//url, address := createWallet()
 	//fmt.Println(url)
 	//fmt.Println(address)
 	_, address := getPrivateKey(wallet2File, password)
-	client, err := ethclient.Dial(ethRpcUrl)
+	client, err := ethclient.Dial(polygonRpcUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 	balance(client, address)
-	//balance(client, addressTo)
-	keyStore := importWallet(walletFilePath)
+	balance(client, addressTo)
+	//keyStore := importWallet(walletFilePath)
 	//transferEth(client, keyStore, address, b, addressTo)
-	transferWithEip1559(client, keyStore, address, 0.0001, addressTo)
+	//transferWithEip1559(client, keyStore, address, 0.0001, addressTo)
 	//getGapPrice(client, ethereum.CallMsg{})
+	tokenBalance(client, BUSD_TOKEN_CONTRSCT, address)
+	tokenBalance(client, BUSD_TOKEN_CONTRSCT, addressTo)
+	//tokenTransfer(client, keyStore, BUSD_TOKEN_CONTRSCT, address, 1, addressTo)
 }
 
-func getGapPrice(client *ethclient.Client, msg ethereum.CallMsg) (*big.Int, *big.Int, uint64) {
+func getGapPrice(client *ethclient.Client, msg ethereum.CallMsg) (*big.Int, *big.Int, *big.Int, uint64) {
 	estimateGas, err := client.EstimateGas(context.Background(), msg)
 	if err != nil {
 		log.Fatal(err)
@@ -61,7 +67,7 @@ func getGapPrice(client *ethclient.Client, msg ethereum.CallMsg) (*big.Int, *big
 	fmt.Println("baseGasDecimal: ", weiToGWei(baseGasDecimal.BigInt()))
 	fmt.Println("maxPriorityFeePerGas: ", weiToGWei(maxPriorityFeePerGas))
 	fmt.Println("maxFeePerGas: ", weiToGWei(maxFeePerGas.BigInt()))
-	return maxPriorityFeePerGas, maxFeePerGas.BigInt(), estimateGas
+	return baseGasDecimal.BigInt(), maxPriorityFeePerGas, maxFeePerGas.BigInt(), estimateGas
 }
 
 func createWallet() (key, address string) {
@@ -166,7 +172,7 @@ func transferWithEip1559(client *ethclient.Client, ks *keystore.KeyStore, addres
 	if err2 != nil {
 		log.Fatal(err2)
 	}
-	maxPriorityFeePerGas, maxFeePerGas, gasLimit := getGapPrice(client, ethereum.CallMsg{})
+	_, maxPriorityFeePerGas, maxFeePerGas, gasLimit := getGapPrice(client, ethereum.CallMsg{})
 	transaction := types.NewTx(&types.DynamicFeeTx{
 		Nonce:     nonce,
 		GasTipCap: maxPriorityFeePerGas,
@@ -198,8 +204,63 @@ func transferWithEip1559(client *ethclient.Client, ks *keystore.KeyStore, addres
 	return hash
 }
 
+func tokenBalance(client *ethclient.Client, contract string, address string) *big.Float {
+	contractAddress := common.HexToAddress(contract)
+	account := accounts.Account{Address: common.HexToAddress(address)}
+
+	token, err := erc20.NewToken(contractAddress, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	balanceOf, err := token.BalanceOf(&bind.CallOpts{}, account.Address)
+	fmt.Println(address, " token balanceOf: ", balanceOf)
+	fmt.Println(address, " token balanceOf: ", weiToEther(balanceOf))
+	return weiToEther(balanceOf).BigFloat()
+}
+
 func tokenTransfer(client *ethclient.Client, ks *keystore.KeyStore, contract string, addressFrom string, float float64, addressTo string) string {
-	return ""
+	contractAddress := common.HexToAddress(contract)
+	fromAccount := accounts.Account{Address: common.HexToAddress(addressFrom)}
+	toAccount := accounts.Account{Address: common.HexToAddress(addressTo)}
+	nonce, err := client.PendingNonceAt(context.Background(), common.HexToAddress(addressFrom))
+	if err != nil {
+		log.Fatal(err)
+	}
+	numWei := etherToWei(float)
+	chainID, err2 := client.ChainID(context.Background())
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	_, maxPriorityFeePerGas, maxFeePerGas, gasLimit := getGapPrice(client, ethereum.CallMsg{})
+	signAccount, err := ks.Find(fromAccount)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ks.Unlock(signAccount, password)
+	if err != nil {
+		log.Fatal(err)
+	}
+	transactOpts, err := bind.NewKeyStoreTransactorWithChainID(ks, fromAccount, chainID)
+	transactOpts.Nonce = new(big.Int).SetUint64(nonce)
+	transactOpts.GasTipCap = maxPriorityFeePerGas
+	transactOpts.GasFeeCap = maxFeePerGas
+	transactOpts.GasLimit = gasLimit
+
+	token, err := erc20.NewToken(contractAddress, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	decimals, err := token.Decimals(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(decimals)
+	transfer, err := token.Transfer(transactOpts, toAccount.Address, numWei.BigInt())
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("token send hash: ", transfer.Hash().Hex())
+	return transfer.Hash().Hex()
 }
 
 func weiToEther(i *big.Int) decimal.Decimal {
