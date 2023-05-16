@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"demo/blockchain/base58"
 	"demo/blockchain/erc20"
 	"encoding/hex"
 	"fmt"
@@ -25,27 +26,29 @@ var wallet1File = "D:\\MyProject\\walletFile\\erc20\\UTC--2023-04-30T15-39-31.88
 var wallet2File = "D:\\MyProject\\walletFile\\erc20\\UTC--2023-04-30T04-27-58.45000000Z--0bbd943e04ecb39ac6c09a2982d780e7e5a5290c.json"
 var ethRpcUrl = "https://goerli.infura.io/v3/89aae6dea4504bc8a4485ad6219df6b3"
 var polygonRpcUrl = "https://rpc-mumbai.maticvigil.com/v1/99300cd360366c25a0222fc8b60323ba84f975a1"
+var tronRpcUrl = "https://nile.trongrid.io/jsonrpc"
 var password = "123456"
-var addressTo = "0x221CFd8877880EF2CA4847d8D114E77669243045"
+var addressTo = "TZJnQ5zGwd5sbuuRwYJGfZqtFJLh9T34JB"
 var BUSD_TOKEN_CONTRSCT = "0xa4e588a997f9eb8e72a06847576b2e1058187b9d"
+var TRON_USDT_TOKEN_CONTRSCT = "TYh74Pj9NR2fornr6saf1SGbzLrq25MX1T"
 
 func main() {
 	//url, address := createWallet()
 	//fmt.Println(url)
 	//fmt.Println(address)
-	_, address := getPrivateKey(wallet2File, password)
-	client, err := ethclient.Dial(polygonRpcUrl)
+	//_, address := getPrivateKey(wallet2File, password)
+	client, err := ethclient.Dial(tronRpcUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	balance(client, address)
-	balance(client, addressTo)
+	//balance(client, address)
+	balance(client, base58.ToHexAddress(addressTo))
 	//keyStore := importWallet(walletFilePath)
 	//transferEth(client, keyStore, address, b, addressTo)
 	//transferWithEip1559(client, keyStore, address, 0.0001, addressTo)
 	//getGapPrice(client, ethereum.CallMsg{})
-	tokenBalance(client, BUSD_TOKEN_CONTRSCT, address)
-	tokenBalance(client, BUSD_TOKEN_CONTRSCT, addressTo)
+	//tokenBalance(client, BUSD_TOKEN_CONTRSCT, address)
+	tokenBalance(client, base58.ToHexAddress(TRON_USDT_TOKEN_CONTRSCT), base58.ToHexAddress(addressTo))
 	//tokenTransfer(client, keyStore, BUSD_TOKEN_CONTRSCT, address, 1, addressTo)
 }
 
