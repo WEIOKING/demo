@@ -82,6 +82,7 @@ func main() {
 
 	// 创建模型的方法,生成文件在 query 目录; 先创建结果不会被后创建的覆盖
 	g.ApplyBasic(dict)
+	//自定义sql
 	g.ApplyInterface(func(query_interface.OdsDictQuerier) {}, dict)
 	//g.ApplyBasic(allModel...)
 
