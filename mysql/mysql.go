@@ -9,6 +9,9 @@ import (
 )
 
 func main() {
+}
+
+func mysql1() {
 	db, err := sql.Open("mysql", "root:28W0f7e@@tcp(159.138.122.113:3306)/space_planckx_new?charset=utf8")
 	if err != nil {
 		log.Fatal(err)
