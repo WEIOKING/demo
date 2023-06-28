@@ -46,5 +46,11 @@ func TestQuerier(t *testing.T) {
 	if err != nil {
 		t.Error("query error")
 	}
-	fmt.Println(result)
+	for i := range result {
+		marshal, err := json.Marshal(result[i])
+		if err != nil {
+			t.Error("json format error")
+		}
+		fmt.Println(string(marshal))
+	}
 }
