@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var botToken = "MTExNjE4ODkwMDkyMzI4OTY4Ng.GmfNmb.g5SjQOaIOKU-9KLnYdu2kJaRJDlEXif87oGyPA"
+var botToken = "MTExNjE4ODkwMDkyMzI4OTY4Ng.GtkPTa.JwHem-xFW3YhvKSlmOL8GP4hI1LY1M3N-iiRTg"
 
 func main() {
 	discord, err := discordgo.New("Bot " + botToken)
