@@ -10,7 +10,9 @@ import (
 )
 
 var redisClient *redis.Client
+var redisClient2 *redis.Client
 var redisOnce sync.Once
+var redisOnce2 sync.Once
 var ctx = context.Background()
 
 const unlockScript = `
@@ -23,9 +25,11 @@ end`
 func GetRedisClient() *redis.Client {
 	redisOnce.Do(func() {
 		redisClient = redis.NewClient(&redis.Options{
-			Addr:     "192.168.1.171:6379",
-			Password: "some34QA123@",
-			DB:       1,
+			Addr:         "190.92.208.145:6379",
+			Password:     "7MW0f7e@",
+			DB:           9,
+			ReadTimeout:  600 * time.Second,
+			WriteTimeout: 600 * time.Second,
 		})
 		_, err := redisClient.Ping(ctx).Result()
 		if err != nil {
@@ -33,6 +37,22 @@ func GetRedisClient() *redis.Client {
 		}
 	})
 	return redisClient
+}
+func GetRedisClient2() *redis.Client {
+	redisOnce2.Do(func() {
+		redisClient2 = redis.NewClient(&redis.Options{
+			Addr:         "10.8.0.5:6379",
+			Password:     "7cAwfXvnzJp8xz3Q59nzHeCKEen8N2FN",
+			DB:           9,
+			ReadTimeout:  600 * time.Second,
+			WriteTimeout: 600 * time.Second,
+		})
+		_, err := redisClient2.Ping(ctx).Result()
+		if err != nil {
+			fmt.Println("redis init error")
+		}
+	})
+	return redisClient2
 }
 
 type RedisLock struct {
