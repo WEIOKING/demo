@@ -41,7 +41,7 @@ func GetRedisClient() *redis.Client {
 func GetRedisClient2() *redis.Client {
 	redisOnce2.Do(func() {
 		redisClient2 = redis.NewClient(&redis.Options{
-			Addr:         "10.8.0.5:6379",
+			Addr:         "10.8.0.102:6379",
 			Password:     "7cAwfXvnzJp8xz3Q59nzHeCKEen8N2FN",
 			DB:           9,
 			ReadTimeout:  600 * time.Second,

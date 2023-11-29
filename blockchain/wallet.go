@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
-	"demo/blockchain/base58"
+	"encoding/json"
+
+	//"demo/blockchain/base58"
 	"demo/blockchain/erc20"
 	"encoding/hex"
 	"fmt"
@@ -26,29 +28,43 @@ var wallet1File = "D:\\MyProject\\walletFile\\erc20\\UTC--2023-04-30T15-39-31.88
 var wallet2File = "D:\\MyProject\\walletFile\\erc20\\UTC--2023-04-30T04-27-58.45000000Z--0bbd943e04ecb39ac6c09a2982d780e7e5a5290c.json"
 var ethRpcUrl = "https://goerli.infura.io/v3/89aae6dea4504bc8a4485ad6219df6b3"
 var polygonRpcUrl = "https://rpc-mumbai.maticvigil.com/v1/99300cd360366c25a0222fc8b60323ba84f975a1"
+var arbitrumRpcUrl = "https://arb1.arbitrum.io/rpc"
+var avaRpcUrl = "https://avalanche-fuji-c-chain.publicnode.com"
+var opmRpcUrl = "https://optimism-goerli.publicnode.com"
 var tronRpcUrl = "https://nile.trongrid.io/jsonrpc"
 var password = "123456"
 var addressTo = "TZJnQ5zGwd5sbuuRwYJGfZqtFJLh9T34JB"
 var BUSD_TOKEN_CONTRSCT = "0xa4e588a997f9eb8e72a06847576b2e1058187b9d"
 var TRON_USDT_TOKEN_CONTRSCT = "TYh74Pj9NR2fornr6saf1SGbzLrq25MX1T"
+var blockNumber = int64(42700769)
 
 func main() {
 	//url, address := createWallet()
 	//fmt.Println(url)
 	//fmt.Println(address)
 	//_, address := getPrivateKey(wallet2File, password)
-	client, err := ethclient.Dial(tronRpcUrl)
+	client, err := ethclient.Dial(opmRpcUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
+	hash := common.HexToHash("0x94a24389357ea5f13b68e467238609368f6cee9e952dda9552cf2e6644a25256")
+	receipt, err := client.TransactionReceipt(context.TODO(), hash)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	marshal, err := json.Marshal(receipt)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	log.Println(string(marshal))
 	//balance(client, address)
-	balance(client, base58.ToHexAddress(addressTo))
+	//balance(client, base58.ToHexAddress(addressTo))
 	//keyStore := importWallet(walletFilePath)
 	//transferEth(client, keyStore, address, b, addressTo)
 	//transferWithEip1559(client, keyStore, address, 0.0001, addressTo)
 	//getGapPrice(client, ethereum.CallMsg{})
-	//tokenBalance(client, BUSD_TOKEN_CONTRSCT, address)
-	tokenBalance(client, base58.ToHexAddress(TRON_USDT_TOKEN_CONTRSCT), base58.ToHexAddress(addressTo))
+	//tokenBalance(client, "0x0FBC989470B5D38f151E78f652874a25262D0515", "0xAFfb2E39B49cc73487DcCD643D8BDe5932C4294C")
+	//tokenBalance(client, base58.ToHexAddress(TRON_USDT_TOKEN_CONTRSCT), base58.ToHexAddress(addressTo))
 	//tokenTransfer(client, keyStore, BUSD_TOKEN_CONTRSCT, address, 1, addressTo)
 }
 
